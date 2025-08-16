@@ -10,13 +10,14 @@ body {
   font-family: sans-serif;
 }
 #epsTableContainer {
-  overflow-x: auto;
+  overflow-x: auto; /* 横スクロール */
   -webkit-overflow-scrolling: touch;
 }
 table {
   border-collapse: collapse;
-  width: 100%;
-  font-size: 13px;
+  font-size: 13px; /* スマホでも見やすい文字サイズ */
+  table-layout: auto; /* 自然な列幅で表示 */
+  min-width: max-content; /* 列幅を詰めず横スクロール可能 */
 }
 th, td {
   border: 1px solid #999;
@@ -52,19 +53,11 @@ h2 {
   font-size: 18px;
   margin-bottom: 8px;
 }
-
-/* スマホ向け微調整 */
 @media (max-width: 600px) {
-  table {
-    font-size: 13px; /* 少し大きめに */
-  }
-  th, td {
-    padding: 4px 5px;
-  }
-  #searchBox {
-    font-size: 14px;
-    padding: 6px;
-  }
+  table { font-size: 13px; }
+  th, td { padding: 4px 5px; }
+  #searchBox { font-size: 14px; padding: 6px; }
+  h2 { font-size: 16px; }
 }
 </style>
 </head>
@@ -182,7 +175,6 @@ function createEpsTable() {
         tdSymbol.addEventListener("click", () => updateChart(symbol));
         row.appendChild(tdSymbol);
 
-        // カレンダー列
         if (dataAll.calendar[symbol]) {
             dataAll.calendar[symbol].forEach(val => {
                 const td = document.createElement("td");
@@ -198,7 +190,7 @@ function createEpsTable() {
             });
         }
 
-        // EPS列（セルごとに横スクロール対応）
+        // EPS列
         [...dataAll.eps[symbol]].reverse().forEach(val => {
             const td = document.createElement("td");
             td.textContent = val !== null && !isNaN(val) ? parseFloat(val).toFixed(2) : "";
