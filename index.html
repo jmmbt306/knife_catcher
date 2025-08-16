@@ -5,72 +5,76 @@
 <title>EPS & Price Chart</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  body {
-    margin: 10px;
-    font-family: sans-serif;
-  }
+body {
+  margin: 10px;
+  font-family: sans-serif;
+}
+table {
+  border-collapse: collapse;
+  margin-top: 10px;
+  width: 100%;
+  font-size: 12px;
+}
+th, td {
+  border: 1px solid #999;
+  padding: 4px;
+  text-align: right;
+  white-space: nowrap; /* 横スクロール対応 */
+}
+th {
+  background: #f0f0f0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+td.symbol-cell {
+  text-align: left;
+  cursor: pointer;
+  color: blue;
+  text-decoration: underline;
+}
+#searchBox {
+  margin-top: 15px;
+  margin-bottom: 5px;
+  padding: 6px;
+  width: 100%;
+  max-width: 300px;
+  font-size: 14px;
+}
+#epsTableContainer {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+canvas {
+  max-width: 100%;
+  height: auto !important;
+}
+h2 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+/* スマホ用微調整 */
+@media (max-width: 600px) {
   table {
-    border-collapse: collapse;
-    margin-top: 10px;
-    width: 100%;
-    font-size: 12px;
+    font-size: 10px;
   }
   th, td {
-    border: 1px solid #999;
-    padding: 4px;
-    text-align: right;
-    white-space: nowrap; /* 折り返さず横スクロール可能に */
-  }
-  th {
-    background: #f0f0f0;
-    position: sticky;
-    top: 0;
-    z-index: 1;
-  }
-  td.symbol-cell {
-    text-align: left;
-    cursor: pointer;
-    color: blue;
-    text-decoration: underline;
+    padding: 2px 3px;
   }
   #searchBox {
-    margin-top: 15px;
-    margin-bottom: 5px;
-    padding: 6px;
-    width: 100%;
-    max-width: 300px;
-    font-size: 14px;
-  }
-  /* 表をスマホで横スクロール可能に */
-  #epsTableContainer {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  canvas {
-    max-width: 100%;
-    height: auto !important;
+    font-size: 12px;
+    padding: 4px;
   }
   h2 {
-    font-size: 18px;
-    margin-bottom: 8px;
+    font-size: 16px;
   }
-
-  /* スマホ向け: 表文字サイズと余白を小さめに */
-  @media (max-width: 600px) {
-    table {
-      font-size: 10px;
-    }
-    th, td {
-      padding: 2px 3px;
-    }
-    #searchBox {
-      font-size: 12px;
-      padding: 4px;
-    }
-    h2 {
-      font-size: 16px;
-    }
+  td.eps-data {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
   }
+}
 </style>
 </head>
 <body>
@@ -78,196 +82,162 @@
 
 <canvas id="epsPriceChart" height="120"></canvas>
 
-<!-- 検索ボックス -->
 <input type="text" id="searchBox" placeholder="銘柄検索...">
 
 <div id="epsTableContainer"></div>
 
 <script>
-    const files = {
-        eps: "epstrend.csv",
-        price: "price.csv",
-        calendar: "calendar.csv" // ← earnings_calendar に変更
-    };
-    
-    let dataAll = { eps: {}, price: {}, calendar: {} };
-    let dateLabels = [];
-    let calendarHeader = []; // ← カレンダーの列名を保持
-    
-    function loadCSV(url) {
-        return fetch(url)
-            .then(res => res.text())
-            .then(text => {
-                const rows = text.trim().split("\n").map(r => r.split(","));
-                const header = rows[0].slice(1); // 1列目以外をヘッダーとする
-                const data = {};
-                rows.slice(1).forEach(row => {
-                    const symbol = row[0];
-                    data[symbol] = row.slice(1).map(v => v === "" ? null : v);
-                });
-                return { header, data };
+const files = { eps: "epstrend.csv", price: "price.csv", calendar: "calendar.csv" };
+
+let dataAll = { eps: {}, price: {}, calendar: {} };
+let dateLabels = [];
+let calendarHeader = [];
+
+function loadCSV(url) {
+    return fetch(url)
+        .then(res => res.text())
+        .then(text => {
+            const rows = text.trim().split("\n").map(r => r.split(","));
+            const header = rows[0].slice(1);
+            const data = {};
+            rows.slice(1).forEach(row => {
+                const symbol = row[0];
+                data[symbol] = row.slice(1).map(v => v === "" ? null : v);
             });
-    }
-    
-    // earnings_calendar.csv 複数列対応
-    function loadCalendarCSV(url) {
-        return fetch(url)
-            .then(res => res.text())
-            .then(text => {
-                const rows = text.trim().split("\n").map(r => r.split(","));
-                calendarHeader = rows[0].slice(1); // 1列目(SYMBOL)以外の列名
-                const data = {};
-                rows.slice(1).forEach(row => {
-                    const symbol = row[0];
-                    const cols = row.slice(1);
-                    data[symbol] = cols;
-                });
-                return data;
+            return { header, data };
+        });
+}
+
+function loadCalendarCSV(url) {
+    return fetch(url)
+        .then(res => res.text())
+        .then(text => {
+            const rows = text.trim().split("\n").map(r => r.split(","));
+            calendarHeader = rows[0].slice(1);
+            const data = {};
+            rows.slice(1).forEach(row => {
+                const symbol = row[0];
+                const cols = row.slice(1);
+                data[symbol] = cols;
             });
-    }
-    
-    Promise.all([
-        loadCSV(files.eps),
-        loadCSV(files.price),
-        loadCalendarCSV(files.calendar)
-    ]).then(([epsData, priceData, calendarData]) => {
-        dateLabels = epsData.header;
-        dataAll.eps = epsData.data;
-        dataAll.price = priceData.data;
-        dataAll.calendar = calendarData;
-    
-        const firstSymbol = Object.keys(dataAll.eps)[0];
-        updateChart(firstSymbol);
-        createEpsTable();
+            return data;
+        });
+}
+
+Promise.all([
+    loadCSV(files.eps),
+    loadCSV(files.price),
+    loadCalendarCSV(files.calendar)
+]).then(([epsData, priceData, calendarData]) => {
+    dateLabels = epsData.header;
+    dataAll.eps = epsData.data;
+    dataAll.price = priceData.data;
+    dataAll.calendar = calendarData;
+
+    const firstSymbol = Object.keys(dataAll.eps)[0];
+    updateChart(firstSymbol);
+    createEpsTable();
+});
+
+let epsPriceChart;
+
+function updateChart(symbol) {
+    if (epsPriceChart) epsPriceChart.destroy();
+
+    epsPriceChart = new Chart(document.getElementById("epsPriceChart"), {
+        type: "line",
+        data: {
+            labels: dateLabels,
+            datasets: [
+                { label: `EPS (${symbol})`, data: dataAll.eps[symbol].map(v => parseFloat(v)), borderColor: "blue", fill: false, yAxisID: 'y1' },
+                { label: `Price (${symbol})`, data: dataAll.price[symbol].map(v => parseFloat(v)), borderColor: "green", fill: false, yAxisID: 'y2' }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y1: { type: 'linear', position: 'left', title: { display: true, text: 'EPS' } },
+                y2: { type: 'linear', position: 'right', title: { display: true, text: 'Price' }, grid: { drawOnChartArea: false } }
+            }
+        }
     });
-    
-    let epsPriceChart;
-    
-    function updateChart(symbol) {
-        if (epsPriceChart) epsPriceChart.destroy();
-    
-        epsPriceChart = new Chart(document.getElementById("epsPriceChart"), {
-            type: "line",
-            data: {
-                labels: dateLabels,
-                datasets: [
-                    {
-                        label: `EPS (${symbol})`,
-                        data: dataAll.eps[symbol].map(v => parseFloat(v)),
-                        borderColor: "blue",
-                        fill: false,
-                        yAxisID: 'y1'
-                    },
-                    {
-                        label: `Price (${symbol})`,
-                        data: dataAll.price[symbol].map(v => parseFloat(v)),
-                        borderColor: "green",
-                        fill: false,
-                        yAxisID: 'y2'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y1: {
-                        type: 'linear',
-                        position: 'left',
-                        title: { display: true, text: 'EPS' }
-                    },
-                    y2: {
-                        type: 'linear',
-                        position: 'right',
-                        title: { display: true, text: 'Price' },
-                        grid: { drawOnChartArea: false }
-                    }
-                }
-            }
-        });
-    }
-    
-    function createEpsTable() {
-        const container = document.getElementById("epsTableContainer");
-        container.innerHTML = "";
-    
-        const table = document.createElement("table");
-        const thead = document.createElement("thead");
-        const tbody = document.createElement("tbody");
-    
-        // ヘッダー
-        const headerRow = document.createElement("tr");
-        const thSymbol = document.createElement("th");
-        thSymbol.textContent = "Symbol";
-        headerRow.appendChild(thSymbol);
-    
-        // earnings_calendar.csv の列ヘッダー追加
-        calendarHeader.forEach(colName => {
-            const th = document.createElement("th");
-            th.textContent = colName;
-            headerRow.appendChild(th);
-        });
-    
-        // EPS 日付列（新しい順）
-        const reversedDates = [...dateLabels].reverse();
-        reversedDates.forEach(date => {
-            const th = document.createElement("th");
-            th.textContent = date;
-            headerRow.appendChild(th);
-        });
-        thead.appendChild(headerRow);
-    
-        // 全銘柄行
-        Object.keys(dataAll.eps).forEach(symbol => {
-            const row = document.createElement("tr");
-    
-            // Symbolセル
-            const tdSymbol = document.createElement("td");
-            tdSymbol.textContent = symbol;
-            tdSymbol.classList.add("symbol-cell");
-            tdSymbol.addEventListener("click", () => {
-                updateChart(symbol);
-            });
-            row.appendChild(tdSymbol);
-    
-            // カレンダー列
-            if (dataAll.calendar[symbol]) {
-                dataAll.calendar[symbol].forEach(val => {
-                    const td = document.createElement("td");
-                    td.textContent = val || "";
-                    td.style.textAlign = "center";
-                    row.appendChild(td);
-                });
-            } else {
-                calendarHeader.forEach(() => {
-                    const td = document.createElement("td");
-                    td.textContent = "";
-                    row.appendChild(td);
-                });
-            }
-    
-            // EPSデータ
-            [...dataAll.eps[symbol]].reverse().forEach(val => {
+}
+
+function createEpsTable() {
+    const container = document.getElementById("epsTableContainer");
+    container.innerHTML = "";
+
+    const table = document.createElement("table");
+    const thead = document.createElement("thead");
+    const tbody = document.createElement("tbody");
+
+    const headerRow = document.createElement("tr");
+    const thSymbol = document.createElement("th");
+    thSymbol.textContent = "Symbol";
+    headerRow.appendChild(thSymbol);
+
+    calendarHeader.forEach(colName => {
+        const th = document.createElement("th");
+        th.textContent = colName;
+        headerRow.appendChild(th);
+    });
+
+    const reversedDates = [...dateLabels].reverse();
+    reversedDates.forEach(date => {
+        const th = document.createElement("th");
+        th.textContent = date;
+        headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+
+    Object.keys(dataAll.eps).forEach(symbol => {
+        const row = document.createElement("tr");
+
+        const tdSymbol = document.createElement("td");
+        tdSymbol.textContent = symbol;
+        tdSymbol.classList.add("symbol-cell");
+        tdSymbol.addEventListener("click", () => updateChart(symbol));
+        row.appendChild(tdSymbol);
+
+        if (dataAll.calendar[symbol]) {
+            dataAll.calendar[symbol].forEach(val => {
                 const td = document.createElement("td");
-                td.textContent = val !== null && !isNaN(val) ? parseFloat(val).toFixed(2) : "";
+                td.textContent = val || "";
+                td.style.textAlign = "center";
                 row.appendChild(td);
             });
-            tbody.appendChild(row);
-        });
-    
-        table.appendChild(thead);
-        table.appendChild(tbody);
-        container.appendChild(table);
-    
-        // 検索機能
-        const searchBox = document.getElementById("searchBox");
-        searchBox.addEventListener("input", () => {
-            const keyword = searchBox.value.toLowerCase();
-            Array.from(tbody.getElementsByTagName("tr")).forEach(tr => {
-                const symbol = tr.cells[0].textContent.toLowerCase();
-                tr.style.display = symbol.includes(keyword) ? "" : "none";
+        } else {
+            calendarHeader.forEach(() => {
+                const td = document.createElement("td");
+                td.textContent = "";
+                row.appendChild(td);
             });
+        }
+
+        // EPS列をスマホ用にまとめて横スクロール対応
+        const epsTd = document.createElement("td");
+        epsTd.classList.add("eps-data");
+        epsTd.textContent = [...dataAll.eps[symbol]].reverse()
+            .map(v => (v !== null && !isNaN(v) ? parseFloat(v).toFixed(2) : ""))
+            .join(" , ");
+        row.appendChild(epsTd);
+
+        tbody.appendChild(row);
+    });
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    container.appendChild(table);
+
+    const searchBox = document.getElementById("searchBox");
+    searchBox.addEventListener("input", () => {
+        const keyword = searchBox.value.toLowerCase();
+        Array.from(tbody.getElementsByTagName("tr")).forEach(tr => {
+            const symbol = tr.cells[0].textContent.toLowerCase();
+            tr.style.display = symbol.includes(keyword) ? "" : "none";
         });
-    }
+    });
+}
 </script>
 </body>
 </html>
