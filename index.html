@@ -9,49 +9,40 @@ body {
   margin: 10px;
   font-family: sans-serif;
 }
-
-/* グラフを画面幅にフィット */
 canvas {
   width: 100% !important;
   height: auto !important;
   max-height: 200px;
 }
-
-/* 横スクロール対応表 */
 #epsTableContainer {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   margin-top: 10px;
 }
-
 table {
   border-collapse: collapse;
-  font-size: 14px; /* モバイルでも見やすい文字サイズ */
+  font-size: 14px;
   table-layout: auto;
-  min-width: max-content; /* 縮小させず横スクロール */
+  min-width: max-content;
 }
-
 th, td {
   border: 1px solid #999;
   padding: 6px 8px;
   text-align: right;
   white-space: nowrap;
 }
-
 th {
   background: #f0f0f0;
   position: sticky;
   top: 0;
   z-index: 1;
 }
-
 td.symbol-cell {
   text-align: left;
   cursor: pointer;
   color: blue;
   text-decoration: underline;
 }
-
 #searchBox {
   margin-top: 15px;
   margin-bottom: 5px;
@@ -60,13 +51,7 @@ td.symbol-cell {
   max-width: 300px;
   font-size: 14px;
 }
-
-h2 {
-  font-size: 18px;
-  margin-bottom: 8px;
-}
-
-/* モバイル微調整 */
+h2 { font-size: 18px; margin-bottom: 8px; }
 @media (max-width: 600px) {
   table { font-size: 14px; }
   th, td { padding: 5px 6px; }
@@ -89,6 +74,7 @@ const files = { eps: "epstrend.csv", price: "price.csv", calendar: "calendar.csv
 let dataAll = { eps: {}, price: {}, calendar: {} };
 let dateLabels = [];
 let calendarHeader = [];
+let currentSymbol = null;
 
 function loadCSV(url) {
     return fetch(url).then(res => res.text())
@@ -133,6 +119,7 @@ Promise.all([loadCSV(files.eps), loadCSV(files.price), loadCalendarCSV(files.cal
 let epsPriceChart;
 
 function updateChart(symbol) {
+    currentSymbol = symbol;
     if (epsPriceChart) epsPriceChart.destroy();
 
     epsPriceChart = new Chart(document.getElementById("epsPriceChart"), {
@@ -147,6 +134,9 @@ function updateChart(symbol) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            layout: {
+                padding: { top: 30 } // 上部に余白を追加
+            },
             scales: {
                 y1: { type: 'linear', position: 'left', title: { display: true, text: 'EPS' } },
                 y2: { type: 'linear', position: 'right', title: { display: true, text: 'Price' }, grid: { drawOnChartArea: false } }
@@ -154,7 +144,20 @@ function updateChart(symbol) {
             plugins: {
                 legend: { labels: { font: { size: 12 } } }
             }
-        }
+        },
+        plugins: [{
+            id: 'symbolLabel',
+            afterDraw: (chart) => {
+                if (!currentSymbol) return;
+                const ctx = chart.ctx;
+                ctx.save();
+                ctx.font = 'bold 16px sans-serif';
+                ctx.fillStyle = 'black';
+                ctx.textAlign = 'center';
+                ctx.fillText(`Symbol: ${currentSymbol}`, chart.width/2, 20); // 上部余白に描画
+                ctx.restore();
+            }
+        }]
     });
 }
 
