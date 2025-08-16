@@ -9,64 +9,66 @@
     margin: 10px;
     font-family: sans-serif;
   }
-
-  h2 {
-    font-size: 18px;
-    margin-bottom: 10px;
-  }
-
-  #epsPriceChart {
-    max-width: 100%;
-  }
-
-  #searchBox {
-    margin-top: 15px;
-    margin-bottom: 10px;
-    padding: 6px;
-    width: 100%; /* ← スマホでは全幅 */
-    font-size: 14px;
-    box-sizing: border-box;
-  }
-
-  #epsTableContainer {
-    overflow-x: auto;  /* 横スクロール許可 */
-  }
-
   table {
     border-collapse: collapse;
     margin-top: 10px;
-    font-size: 11px;   /* ← 少し小さめ */
-    min-width: 600px;  /* ← スクロール前提の横幅確保 */
+    width: 100%;
+    font-size: 12px;
   }
-
   th, td {
     border: 1px solid #999;
-    padding: 2px 4px;  /* ← コンパクト化 */
+    padding: 4px;
     text-align: right;
-    white-space: nowrap; /* ← 改行させない */
+    white-space: nowrap; /* 折り返さず横スクロール可能に */
   }
-
   th {
     background: #f0f0f0;
+    position: sticky;
+    top: 0;
+    z-index: 1;
   }
-
   td.symbol-cell {
     text-align: left;
     cursor: pointer;
     color: blue;
     text-decoration: underline;
   }
+  #searchBox {
+    margin-top: 15px;
+    margin-bottom: 5px;
+    padding: 6px;
+    width: 100%;
+    max-width: 300px;
+    font-size: 14px;
+  }
+  /* 表をスマホで横スクロール可能に */
+  #epsTableContainer {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  canvas {
+    max-width: 100%;
+    height: auto !important;
+  }
+  h2 {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
 
-  /* スマホ幅に応じてさらに調整 */
+  /* スマホ向け: 表文字サイズと余白を小さめに */
   @media (max-width: 600px) {
-    h2 {
-      font-size: 16px;
-    }
     table {
       font-size: 10px;
     }
     th, td {
-      padding: 2px;
+      padding: 2px 3px;
+    }
+    #searchBox {
+      font-size: 12px;
+      padding: 4px;
+    }
+    h2 {
+      font-size: 16px;
     }
   }
 </style>
@@ -85,12 +87,12 @@
     const files = {
         eps: "epstrend.csv",
         price: "price.csv",
-        calendar: "calendar.csv" // earnings_calendar.csv に変更可能
+        calendar: "calendar.csv" // ← earnings_calendar に変更
     };
     
     let dataAll = { eps: {}, price: {}, calendar: {} };
     let dateLabels = [];
-    let calendarHeader = []; // カレンダーの列名を保持
+    let calendarHeader = []; // ← カレンダーの列名を保持
     
     function loadCSV(url) {
         return fetch(url)
@@ -167,7 +169,6 @@
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
                 scales: {
                     y1: {
                         type: 'linear',
@@ -225,7 +226,6 @@
             tdSymbol.classList.add("symbol-cell");
             tdSymbol.addEventListener("click", () => {
                 updateChart(symbol);
-                window.scrollTo({ top: 0, behavior: "smooth" }); // グラフへ戻る
             });
             row.appendChild(tdSymbol);
     
