@@ -9,17 +9,20 @@ body {
   margin: 10px;
   font-family: sans-serif;
 }
+#epsTableContainer {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 table {
   border-collapse: collapse;
-  margin-top: 10px;
   width: 100%;
-  font-size: 12px;
+  font-size: 13px;
 }
 th, td {
   border: 1px solid #999;
-  padding: 4px;
+  padding: 4px 6px;
   text-align: right;
-  white-space: nowrap; /* 横スクロール対応 */
+  white-space: nowrap;
 }
 th {
   background: #f0f0f0;
@@ -41,10 +44,6 @@ td.symbol-cell {
   max-width: 300px;
   font-size: 14px;
 }
-#epsTableContainer {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
 canvas {
   max-width: 100%;
   height: auto !important;
@@ -54,25 +53,17 @@ h2 {
   margin-bottom: 8px;
 }
 
-/* スマホ用微調整 */
+/* スマホ向け微調整 */
 @media (max-width: 600px) {
   table {
-    font-size: 10px;
+    font-size: 13px; /* 少し大きめに */
   }
   th, td {
-    padding: 2px 3px;
+    padding: 4px 5px;
   }
   #searchBox {
-    font-size: 12px;
-    padding: 4px;
-  }
-  h2 {
-    font-size: 16px;
-  }
-  td.eps-data {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
+    font-size: 14px;
+    padding: 6px;
   }
 }
 </style>
@@ -88,47 +79,40 @@ h2 {
 
 <script>
 const files = { eps: "epstrend.csv", price: "price.csv", calendar: "calendar.csv" };
-
 let dataAll = { eps: {}, price: {}, calendar: {} };
 let dateLabels = [];
 let calendarHeader = [];
 
 function loadCSV(url) {
-    return fetch(url)
-        .then(res => res.text())
-        .then(text => {
-            const rows = text.trim().split("\n").map(r => r.split(","));
-            const header = rows[0].slice(1);
-            const data = {};
-            rows.slice(1).forEach(row => {
-                const symbol = row[0];
-                data[symbol] = row.slice(1).map(v => v === "" ? null : v);
-            });
-            return { header, data };
+    return fetch(url).then(res => res.text())
+    .then(text => {
+        const rows = text.trim().split("\n").map(r => r.split(","));
+        const header = rows[0].slice(1);
+        const data = {};
+        rows.slice(1).forEach(row => {
+            const symbol = row[0];
+            data[symbol] = row.slice(1).map(v => v === "" ? null : v);
         });
+        return { header, data };
+    });
 }
 
 function loadCalendarCSV(url) {
-    return fetch(url)
-        .then(res => res.text())
-        .then(text => {
-            const rows = text.trim().split("\n").map(r => r.split(","));
-            calendarHeader = rows[0].slice(1);
-            const data = {};
-            rows.slice(1).forEach(row => {
-                const symbol = row[0];
-                const cols = row.slice(1);
-                data[symbol] = cols;
-            });
-            return data;
+    return fetch(url).then(res => res.text())
+    .then(text => {
+        const rows = text.trim().split("\n").map(r => r.split(","));
+        calendarHeader = rows[0].slice(1);
+        const data = {};
+        rows.slice(1).forEach(row => {
+            const symbol = row[0];
+            data[symbol] = row.slice(1);
         });
+        return data;
+    });
 }
 
-Promise.all([
-    loadCSV(files.eps),
-    loadCSV(files.price),
-    loadCalendarCSV(files.calendar)
-]).then(([epsData, priceData, calendarData]) => {
+Promise.all([loadCSV(files.eps), loadCSV(files.price), loadCalendarCSV(files.calendar)])
+.then(([epsData, priceData, calendarData]) => {
     dateLabels = epsData.header;
     dataAll.eps = epsData.data;
     dataAll.price = priceData.data;
@@ -182,8 +166,7 @@ function createEpsTable() {
         headerRow.appendChild(th);
     });
 
-    const reversedDates = [...dateLabels].reverse();
-    reversedDates.forEach(date => {
+    dateLabels.slice().reverse().forEach(date => {
         const th = document.createElement("th");
         th.textContent = date;
         headerRow.appendChild(th);
@@ -199,6 +182,7 @@ function createEpsTable() {
         tdSymbol.addEventListener("click", () => updateChart(symbol));
         row.appendChild(tdSymbol);
 
+        // カレンダー列
         if (dataAll.calendar[symbol]) {
             dataAll.calendar[symbol].forEach(val => {
                 const td = document.createElement("td");
@@ -214,13 +198,13 @@ function createEpsTable() {
             });
         }
 
-        // EPS列をスマホ用にまとめて横スクロール対応
-        const epsTd = document.createElement("td");
-        epsTd.classList.add("eps-data");
-        epsTd.textContent = [...dataAll.eps[symbol]].reverse()
-            .map(v => (v !== null && !isNaN(v) ? parseFloat(v).toFixed(2) : ""))
-            .join(" , ");
-        row.appendChild(epsTd);
+        // EPS列（セルごとに横スクロール対応）
+        [...dataAll.eps[symbol]].reverse().forEach(val => {
+            const td = document.createElement("td");
+            td.textContent = val !== null && !isNaN(val) ? parseFloat(val).toFixed(2) : "";
+            td.classList.add("eps-data");
+            row.appendChild(td);
+        });
 
         tbody.appendChild(row);
     });
