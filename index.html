@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1"> <!-- ★追加：スマホ用レイアウト -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>EPS & Price Chart</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
@@ -77,11 +77,16 @@ let dateLabels = [];
 let calendarHeader = [];
 let currentSymbol = null;
 
+// 年を取り除いてMM-DDだけにする関数
+function formatDate(dateStr) {
+    return dateStr ? dateStr.replace(/^20\d{2}-/, '') : '';
+}
+
 function loadCSV(url) {
     return fetch(url).then(res => res.text())
         .then(text => {
             const rows = text.trim().split("\n").map(r => r.split(","));
-            const header = rows[0].slice(1);
+            const header = rows[0].slice(1).map(formatDate); // ヘッダーも変換
             const data = {};
             rows.slice(1).forEach(row => {
                 const symbol = row[0];
@@ -135,9 +140,7 @@ function updateChart(symbol) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: {
-                padding: { top: 30 } // 上部に余白を追加
-            },
+            layout: { padding: { top: 30 } },
             scales: {
                 y1: { type: 'linear', position: 'left', title: { display: true, text: 'EPS' } },
                 y2: { type: 'linear', position: 'right', title: { display: true, text: 'Price' }, grid: { drawOnChartArea: false } }
@@ -155,7 +158,7 @@ function updateChart(symbol) {
                 ctx.font = 'bold 16px sans-serif';
                 ctx.fillStyle = 'black';
                 ctx.textAlign = 'center';
-                ctx.fillText(`Symbol: ${currentSymbol}`, chart.width/2, 20); // 上部余白に描画
+                ctx.fillText(`Symbol: ${currentSymbol}`, chart.width/2, 20);
                 ctx.restore();
             }
         }]
@@ -183,7 +186,7 @@ function createEpsTable() {
 
     dateLabels.slice().reverse().forEach(date => {
         const th = document.createElement("th");
-        th.textContent = date;
+        th.textContent = date; // ここはすでに MM-DD
         headerRow.appendChild(th);
     });
     thead.appendChild(headerRow);
