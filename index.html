@@ -27,7 +27,7 @@ canvas {
   font-size: 14px;
 }
 #epsTableContainer {
-  flex: 1; /* 余白いっぱいを占有 */
+  flex: 1; /* 残りの高さを全部使う */
   overflow-x: auto; /* 横スクロール */
   overflow-y: auto; /* 縦スクロール */
   -webkit-overflow-scrolling: touch;
@@ -49,14 +49,22 @@ th {
   background: #f0f0f0;
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 2; /* ヘッダー */
 }
+
+/* --- Symbol列 固定＆グレー背景 --- */
+th:first-child,
 td.symbol-cell {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: #e0e0e0; /* グレー背景 */
   text-align: left;
   cursor: pointer;
   color: blue;
   text-decoration: underline;
 }
+
 h2 { font-size: 18px; margin-bottom: 8px; }
 @media (max-width: 600px) {
   table { font-size: 14px; }
