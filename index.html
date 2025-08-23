@@ -11,7 +11,7 @@ body {
   font-family: sans-serif;
   display: flex;
   flex-direction: column;
-  height: 100vh; /* 全画面を使う */
+  height: 100vh;
 }
 canvas {
   width: 100% !important;
@@ -27,9 +27,9 @@ canvas {
   font-size: 14px;
 }
 #epsTableContainer {
-  flex: 1; /* 残りの高さを全部使う */
-  overflow-x: auto; /* 横スクロール */
-  overflow-y: auto; /* 縦スクロール */
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   margin-top: 10px;
 }
@@ -49,16 +49,16 @@ th {
   background: #f0f0f0;
   position: sticky;
   top: 0;
-  z-index: 2; /* ヘッダー */
+  z-index: 2;
 }
 
-/* --- Symbol列 固定＆グレー背景 --- */
+/* Symbol列 固定＆グレー背景 */
 th:first-child,
 td.symbol-cell {
   position: sticky;
   left: 0;
   z-index: 3;
-  background: #e0e0e0; /* グレー背景 */
+  background: #e0e0e0;
   text-align: left;
   cursor: pointer;
   color: blue;
@@ -90,7 +90,6 @@ let dateLabels = [];
 let calendarHeader = [];
 let currentSymbol = null;
 
-// 年を取り除いてMM-DDだけにする関数
 function formatDate(dateStr) {
     return dateStr ? dateStr.replace(/^20\d{2}-/, '') : '';
 }
@@ -99,7 +98,7 @@ function loadCSV(url) {
     return fetch(url).then(res => res.text())
         .then(text => {
             const rows = text.trim().split("\n").map(r => r.split(","));
-            const header = rows[0].slice(1).map(formatDate); // ヘッダーも変換
+            const header = rows[0].slice(1).map(formatDate);
             const data = {};
             rows.slice(1).forEach(row => {
                 const symbol = row[0];
@@ -199,7 +198,7 @@ function createEpsTable() {
 
     dateLabels.slice().reverse().forEach(date => {
         const th = document.createElement("th");
-        th.textContent = date; // ここはすでに MM-DD
+        th.textContent = date;
         headerRow.appendChild(th);
     });
     thead.appendChild(headerRow);
@@ -228,9 +227,20 @@ function createEpsTable() {
             });
         }
 
-        [...dataAll.eps[symbol]].reverse().forEach(val => {
+        // EPS列の色付け（右列と比較）
+        const epsValues = [...dataAll.eps[symbol]].reverse().map(v => v !== null && !isNaN(v) ? parseFloat(v) : null);
+
+        epsValues.forEach((val, i) => {
             const td = document.createElement("td");
-            td.textContent = val !== null && !isNaN(val) ? parseFloat(val).toFixed(2) : "";
+            td.textContent = val !== null ? val.toFixed(2) : "";
+
+            if (val !== null && i < epsValues.length - 1) {
+                const nextVal = epsValues[i + 1];
+                if (nextVal !== null) {
+                    if (val > nextVal) td.style.color = "green";
+                    else if (val < nextVal) td.style.color = "red";
+                }
+            }
             row.appendChild(td);
         });
 
