@@ -9,14 +9,27 @@
 body {
   margin: 10px;
   font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* 全画面を使う */
 }
 canvas {
   width: 100% !important;
   height: auto !important;
   max-height: 200px;
 }
+#searchBox {
+  margin-top: 15px;
+  margin-bottom: 5px;
+  padding: 6px;
+  width: 100%;
+  max-width: 300px;
+  font-size: 14px;
+}
 #epsTableContainer {
-  overflow-x: auto;
+  flex: 1; /* 余白いっぱいを占有 */
+  overflow-x: auto; /* 横スクロール */
+  overflow-y: auto; /* 縦スクロール */
   -webkit-overflow-scrolling: touch;
   margin-top: 10px;
 }
@@ -43,14 +56,6 @@ td.symbol-cell {
   cursor: pointer;
   color: blue;
   text-decoration: underline;
-}
-#searchBox {
-  margin-top: 15px;
-  margin-bottom: 5px;
-  padding: 6px;
-  width: 100%;
-  max-width: 300px;
-  font-size: 14px;
 }
 h2 { font-size: 18px; margin-bottom: 8px; }
 @media (max-width: 600px) {
