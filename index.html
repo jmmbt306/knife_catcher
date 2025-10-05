@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>EPS & Price Chart</title>
+<title>EPS Chart</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 body {
@@ -75,7 +75,7 @@ h2 { font-size: 18px; margin-bottom: 8px; }
 </style>
 </head>
 <body>
-<h2>EPS & Price Chart</h2>
+<h2>EPS Chart</h2>
 
 <canvas id="epsPriceChart"></canvas>
 
@@ -84,16 +84,24 @@ h2 { font-size: 18px; margin-bottom: 8px; }
 <div id="epsTableContainer"></div>
 
 <script>
-const files = { eps: "epstrend.csv", price: "price.csv", calendar: "calendar.csv" };
+// ==== ファイル名設定 ====
+const files = { 
+    eps: "epstrend_0q.csv",   // 四半期EPS
+    price: "epstrend_0y.csv", // 年次EPSまたは株価
+    calendar: "calendar.csv"  // カレンダー情報
+};
+
 let dataAll = { eps: {}, price: {}, calendar: {} };
 let dateLabels = [];
 let calendarHeader = [];
 let currentSymbol = null;
 
+// ==== 日付フォーマット ====
 function formatDate(dateStr) {
     return dateStr ? dateStr.replace(/^20\d{2}-/, '') : '';
 }
 
+// ==== 通常CSV読み込み ====
 function loadCSV(url) {
     return fetch(url).then(res => res.text())
         .then(text => {
@@ -108,6 +116,7 @@ function loadCSV(url) {
         });
 }
 
+// ==== カレンダーCSV読み込み ====
 function loadCalendarCSV(url) {
     return fetch(url).then(res => res.text())
         .then(text => {
@@ -122,8 +131,12 @@ function loadCalendarCSV(url) {
         });
 }
 
-Promise.all([loadCSV(files.eps), loadCSV(files.price), loadCalendarCSV(files.calendar)])
-.then(([epsData, priceData, calendarData]) => {
+// ==== データ読み込み ====
+Promise.all([
+    loadCSV(files.eps), 
+    loadCSV(files.price), 
+    loadCalendarCSV(files.calendar)
+]).then(([epsData, priceData, calendarData]) => {
     dateLabels = epsData.header;
     dataAll.eps = epsData.data;
     dataAll.price = priceData.data;
@@ -136,6 +149,7 @@ Promise.all([loadCSV(files.eps), loadCSV(files.price), loadCalendarCSV(files.cal
 
 let epsPriceChart;
 
+// ==== グラフ更新 ====
 function updateChart(symbol) {
     currentSymbol = symbol;
     if (epsPriceChart) epsPriceChart.destroy();
@@ -145,8 +159,8 @@ function updateChart(symbol) {
         data: {
             labels: dateLabels,
             datasets: [
-                { label: `EPS (${symbol})`, data: dataAll.eps[symbol].map(v => parseFloat(v)), borderColor: "blue", fill: false, yAxisID: 'y1' },
-                { label: `Price (${symbol})`, data: dataAll.price[symbol].map(v => parseFloat(v)), borderColor: "green", fill: false, yAxisID: 'y2' }
+                { label: `Qusater`, data: dataAll.eps[symbol].map(v => parseFloat(v)), borderColor: "blue", fill: false, yAxisID: 'y1' },
+                { label: `Year`, data: dataAll.price[symbol].map(v => parseFloat(v)), borderColor: "green", fill: false, yAxisID: 'y2' }
             ]
         },
         options: {
@@ -154,8 +168,8 @@ function updateChart(symbol) {
             maintainAspectRatio: false,
             layout: { padding: { top: 30 } },
             scales: {
-                y1: { type: 'linear', position: 'left', title: { display: true, text: 'EPS' } },
-                y2: { type: 'linear', position: 'right', title: { display: true, text: 'Price' }, grid: { drawOnChartArea: false } }
+                y1: { type: 'linear', position: 'left', title: { display: true, text: 'Quater' } },
+                y2: { type: 'linear', position: 'right', title: { display: true, text: 'Year' }, grid: { drawOnChartArea: false } }
             },
             plugins: {
                 legend: { labels: { font: { size: 12 } } }
@@ -177,6 +191,7 @@ function updateChart(symbol) {
     });
 }
 
+// ==== テーブル生成 ====
 function createEpsTable() {
     const container = document.getElementById("epsTableContainer");
     container.innerHTML = "";
