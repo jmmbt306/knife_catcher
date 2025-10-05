@@ -159,7 +159,7 @@ function updateChart(symbol) {
         data: {
             labels: dateLabels,
             datasets: [
-                { label: `Qusater`, data: dataAll.eps[symbol].map(v => parseFloat(v)), borderColor: "blue", fill: false, yAxisID: 'y1' },
+                { label: `Quarter`, data: dataAll.eps[symbol].map(v => parseFloat(v)), borderColor: "blue", fill: false, yAxisID: 'y1' },
                 { label: `Year`, data: dataAll.price[symbol].map(v => parseFloat(v)), borderColor: "green", fill: false, yAxisID: 'y2' }
             ]
         },
@@ -168,8 +168,8 @@ function updateChart(symbol) {
             maintainAspectRatio: false,
             layout: { padding: { top: 30 } },
             scales: {
-                y1: { type: 'linear', position: 'left', title: { display: true, text: 'Quater' } },
-                y2: { type: 'linear', position: 'right', title: { display: true, text: 'Year' }, grid: { drawOnChartArea: false } }
+                y1: { type: 'linear', position: 'left', title: { display: true, text: 'Quarter EPS' } },
+                y2: { type: 'linear', position: 'right', title: { display: true, text: 'Year EPS' }, grid: { drawOnChartArea: false } }
             },
             plugins: {
                 legend: { labels: { font: { size: 12 } } }
